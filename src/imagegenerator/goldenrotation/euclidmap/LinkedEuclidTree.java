@@ -210,6 +210,7 @@ public class LinkedEuclidTree {
         return;
     }
 
+    // TODO this is a defect. This does not capture an intersection
     private boolean intersects(View view) {
         if (contains(view.leftX,view.topY)) return true;
         if (contains(view.rightX,view.bottomY)) return true;
