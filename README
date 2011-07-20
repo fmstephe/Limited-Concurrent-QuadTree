@@ -1,0 +1,1 @@
+This project contains an experimental, but useful, Concurrent Quad-Tree implementation. It was originally intended to support the generation of random maps of non-overlapping circles. On my i7 quad-core laptop it can insert circles at up to four times the rate over single threaded mode. So it wan't too bad.
