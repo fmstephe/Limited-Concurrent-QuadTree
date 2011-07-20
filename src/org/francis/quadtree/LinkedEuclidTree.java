@@ -1,10 +1,16 @@
-package imagegenerator.goldenrotation.euclidmap;
+package org.francis.quadtree;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Partially thread-safe quad-tree implementation. Specifically allows concurrent insertions,
+ * but does not support concurrent deletes (<code>clearView</code>)
+ *
+ * @author Francis
+ */
 public class LinkedEuclidTree {
     
     public static final ThreadLocal<List<LinkedEuclidTree>> lockedTrees = new ThreadLocal<List<LinkedEuclidTree>> () {
@@ -26,7 +32,7 @@ public class LinkedEuclidTree {
     private final ReentrantLock lock;
     public final double leftX,rightX,topY,bottomY;
     
-    public void getWithinSquare(View view, Set<GoldenCircle> circles) {
+    public void getWithinSquare(View view, Set<Circle> circles) {
         if (!intersects(view)) return;
         // Rather than locking for reads we just cache the current state and treat that as our view (potentially ignoring concurrent writes)
         TreeState currentState = state;
@@ -84,7 +90,7 @@ public class LinkedEuclidTree {
         lock.unlock();
     }
     
-    public boolean put(GoldenCircle putCircle) {
+    public boolean put(Circle putCircle) {
         List<LinkedEuclidTree> leafList = new ArrayList<LinkedEuclidTree>();
         try {
             if (!collectAndLockLeaves(putCircle,leafList)) return false;
@@ -104,7 +110,7 @@ public class LinkedEuclidTree {
         }
     }
 
-    private boolean collectAndLockLeaves(GoldenCircle putCircle, List<LinkedEuclidTree> leafList) {
+    private boolean collectAndLockLeaves(Circle putCircle, List<LinkedEuclidTree> leafList) {
         if (!containsCircle(putCircle)) return true;
         if (state.phase != TreeState.Phase.BRANCH) {
             this.lockTree();
@@ -130,7 +136,7 @@ public class LinkedEuclidTree {
         return true;
     }
     
-    private void putInternal(GoldenCircle putCircle) {
+    private void putInternal(Circle putCircle) {
         if (state.phase == TreeState.Phase.EMPTY) {
             putEmpty(putCircle);
         }
@@ -145,28 +151,28 @@ public class LinkedEuclidTree {
         }
     }
     
-    private void putEmpty(GoldenCircle putCircle) {
+    private void putEmpty(Circle putCircle) {
         assert containsCircle(putCircle);
         assert lock.isHeldByCurrentThread();
         TreeState newState = new TreeState(putCircle);
         state = newState;
     }
     
-    private void putSingle(GoldenCircle putCircle) {
+    private void putSingle(Circle putCircle) {
         assert containsCircle(putCircle);
         assert lock.isHeldByCurrentThread();
         TreeState newState = new TreeState(state.goldenCircle1,putCircle);
         state = newState;
     }
     
-    private void putDouble(GoldenCircle putCircle) {
+    private void putDouble(Circle putCircle) {
         assert containsCircle(putCircle);
         assert lock.isHeldByCurrentThread();
         TreeState newState = branchTreeState(putCircle);
         state = newState;
     }
     
-    private TreeState branchTreeState(GoldenCircle putCircle) {
+    private TreeState branchTreeState(Circle putCircle) {
         double midX = rightX - ((rightX-leftX)/2);
         double midY = bottomY - ((bottomY-topY)/2);
         LinkedEuclidTree tree1 = new LinkedEuclidTree(leftX,midX,topY,midY);
@@ -188,7 +194,7 @@ public class LinkedEuclidTree {
         return new TreeState(tree1,tree2,tree3,tree4);
     }
     
-    public void getConflicts(GoldenCircle conflictCircle, Set<GoldenCircle> conflicts) {
+    public void getConflicts(Circle conflictCircle, Set<Circle> conflicts) {
         if (!containsCircle(conflictCircle)) return;
         TreeState currentState = state;
         // Rather than locking for reads we just cache the current state and treat that as our view (potentially ignoring concurrent writes)
@@ -238,11 +244,11 @@ public class LinkedEuclidTree {
         return containsCircle(x,y,radius,leftX,rightX,topY,bottomY);
     }
     
-    private boolean containsCircle(GoldenCircle circle) {
+    private boolean containsCircle(Circle circle) {
         return containsCircle(circle.x,circle.y,circle.radius);
     }
 
-    private boolean containsCircle(GoldenCircle circle, View view) {
+    private boolean containsCircle(Circle circle, View view) {
         return containsCircle(circle.x,circle.y,circle.radius,view.leftX,view.rightX,view.topY,view.bottomY);
     }
     
@@ -280,7 +286,7 @@ public class LinkedEuclidTree {
     private static class TreeState {
         enum Phase {EMPTY,ONE_CIRCLE,TWO_CIRCLE,BRANCH};
         
-        public final GoldenCircle goldenCircle1,goldenCircle2;
+        public final Circle goldenCircle1,goldenCircle2;
         public final LinkedEuclidTree tree1,tree2,tree3,tree4;
         public final Phase phase;
         
@@ -294,7 +300,7 @@ public class LinkedEuclidTree {
             this.tree4 = null;
         }
         
-        public TreeState(GoldenCircle goldenCircle1) {
+        public TreeState(Circle goldenCircle1) {
             if (goldenCircle1 == null) throw new IllegalArgumentException();
             this.phase = Phase.ONE_CIRCLE;
             this.goldenCircle1 = goldenCircle1;
@@ -305,7 +311,7 @@ public class LinkedEuclidTree {
             this.tree4 = null;
         }
         
-        public TreeState(GoldenCircle goldenCircle1, GoldenCircle goldenCircle2) {
+        public TreeState(Circle goldenCircle1, Circle goldenCircle2) {
             if (goldenCircle1 == null) throw new IllegalArgumentException();
             this.phase = Phase.TWO_CIRCLE;
             this.goldenCircle1 = goldenCircle1;

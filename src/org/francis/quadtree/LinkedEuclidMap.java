@@ -1,8 +1,13 @@
-package imagegenerator.goldenrotation.euclidmap;
+package org.francis.quadtree;
 
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Implementation of EuclidMap, wrapping an instance of LinkedEuclidTree.
+ *
+ * @author Francis
+ */
 public class LinkedEuclidMap extends EuclidMap {
     
     private final LinkedEuclidTree tree;
@@ -11,21 +16,15 @@ public class LinkedEuclidMap extends EuclidMap {
         this.tree = new LinkedEuclidTree(leftX, rightX, topY, bottomY);
     }
     
-    /* (non-Javadoc)
-     * @see imagegenerator.goldenrotation.euclidmap.IEuclideMap#getWithinSquare(double, double, double, double)
-     */
     @Override
-    public Set<GoldenCircle> getWithinView(View view) {
-        Set<GoldenCircle> circles = new HashSet<GoldenCircle>();
+    public Set<Circle> getWithinView(View view) {
+        Set<Circle> circles = new HashSet<Circle>();
         tree.getWithinSquare(view, circles);
         return circles;
     }
     
-    /* (non-Javadoc)
-     * @see imagegenerator.goldenrotation.euclidmap.IEuclideMap#put(imagegenerator.goldenrotation.euclidmap.GoldenCircle)
-     */
     @Override
-    public boolean put(GoldenCircle putCircle) {
+    public boolean put(Circle putCircle) {
         try {
             return tree.put(putCircle);
         }
@@ -36,8 +35,8 @@ public class LinkedEuclidMap extends EuclidMap {
     }
     
     @Override
-    public Set<GoldenCircle> getConflicts(GoldenCircle conflictCircle) {
-        Set<GoldenCircle> conflicts = new HashSet<GoldenCircle>();
+    public Set<Circle> getConflicts(Circle conflictCircle) {
+        Set<Circle> conflicts = new HashSet<Circle>();
         tree.getConflicts(conflictCircle,conflicts);
         return conflicts;
     }

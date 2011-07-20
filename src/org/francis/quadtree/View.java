@@ -1,4 +1,4 @@
-package imagegenerator.goldenrotation.euclidmap;
+package org.francis.quadtree;
 
 public class View {
 
